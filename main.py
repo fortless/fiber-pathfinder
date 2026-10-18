@@ -5,14 +5,14 @@ from scipy.spatial import KDTree
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import os
+from pathlib import Path
 import math
 import numpy as np
 
 app = FastAPI()
-os.makedirs("templates", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 ITU_WFS_URL = "https://bbmaps.itu.int/geoserver/ows"
 SCM_CABLE_GEO = "https://www.submarinecablemap.com/api/v3/cable/cable-geo.json"
@@ -26,19 +26,17 @@ def haversine(lon1, lat1, lon2, lat2):
 
 @app.get("/")
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 
-
-SCM_DATA = {
-    "cables": requests.get("https://www.submarinecablemap.com/api/v3/cable/cable-geo.json").json(),
-    "landings": requests.get("https://www.submarinecablemap.com/api/v3/landing-point/landing-point-geo.json").json()
-}
-
+def fetch_geojson(url, **kwargs):
+    response = requests.get(url, timeout=40, **kwargs)
+    response.raise_for_status()
+    return response.json()
 
 
 @app.get("/calculate")
-async def calculate_fiber(start_lat: float, start_lon: float, end_lat: float, end_lon: float):
+def calculate_fiber(start_lat: float, start_lon: float, end_lat: float, end_lon: float):
     try:
         pad = 15.0
         bbox = f"{min(start_lon, end_lon)-pad},{min(start_lat, end_lat)-pad},{max(start_lon, end_lon)+pad},{max(start_lat, end_lat)+pad}"
@@ -47,9 +45,9 @@ async def calculate_fiber(start_lat: float, start_lon: float, end_lat: float, en
         itu_params = {"service": "WFS", "version": "1.0.0", "request": "GetFeature",
                       "typeName": "ITU:trx_public_2", "outputFormat": "application/json", 
                       "maxFeatures": 40000, "bbox": bbox}
-        itu_res = requests.get(ITU_WFS_URL, params=itu_params, timeout=40).json()
-        scm_cables = requests.get(SCM_CABLE_GEO, timeout=40).json()
-        scm_landings = requests.get(SCM_LANDING_GEO, timeout=40).json()
+        itu_res = fetch_geojson(ITU_WFS_URL, params=itu_params)
+        scm_cables = fetch_geojson(SCM_CABLE_GEO)
+        scm_landings = fetch_geojson(SCM_LANDING_GEO)
 
         G = nx.Graph()
         land_nodes = []

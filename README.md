@@ -20,8 +20,9 @@ The app dynamically fetches data from the **ITU (International Telecommunication
 ##  Project Structure
 
 ```text
-fiber-calculator/
+fiber-pathfinder/
 ├── main.py              # FastAPI Backend & Graph Engine
+├── requirements.txt     # Python dependencies
 ├── static/
 │   └── css/
 │       └── styles.css   # Custom styles (placeholder)
@@ -37,10 +38,19 @@ git clone https://github.com/fortless/fiber-pathfinder.git
 cd fiber-calculator
 ```
 
-### 2. Install dependencies
+### 2. Create and activate a virtual environment
 Ensure you have Python 3.9+ installed.
 ```bash
-pip install fastapi uvicorn requests networkx scipy numpy
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+On Windows PowerShell, use `python -m venv .venv` and `.venv\Scripts\Activate.ps1` instead.
+
+### 3. Install dependencies
+With the virtual environment activated:
+```bash
+python -m pip install -r requirements.txt
 ```
 
 ## Getting Started
@@ -52,11 +62,13 @@ python main.py
 ```
 *Or via uvicorn directly:*
 ```bash
-uvicorn main:app --reload
+python -m uvicorn main:app --reload
 ```
 
-By default the app listens on 127.0.0.1:8000. This is changeable in the last line of `main.py`, otherwise, you can open it in your browser by accessing:
+Activate the virtual environment again when opening a new terminal. By default the app listens on 127.0.0.1:8000. This is changeable in the last line of `main.py`, otherwise, you can open it in your browser by accessing:
 **`http://127.0.0.1:8000`**
+
+The app starts without fetching routing data. Route calculations require access to ITU and Submarine Cable Map; if a data service is unavailable (for example, HTTP 503), the calculation reports an error and the app remains available. Try the calculation again once the service recovers.
 
 ## How to Use
 
