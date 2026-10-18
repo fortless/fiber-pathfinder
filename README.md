@@ -34,7 +34,7 @@ fiber-calculator/
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/fortless/fiber-pathfinder.git
-cd fiber-calculator
+cd fiber-pathfinder
 ```
 
 ### 2. Install dependencies
